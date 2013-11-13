@@ -7,10 +7,10 @@ import protocol_packages.DataTransfer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -24,24 +24,38 @@ public class UsersFrame extends JFrame {
     private ArrayList<UserLabel> userLabels = new ArrayList<UserLabel>();
     private ArrayList<ChatDialog> chatDialogs = new ArrayList<ChatDialog>();
     private ProtocolManager pm;
+    private JPanel userPanel;
+    private JPanel controlPanel;
 
     public UsersFrame(String login, String password, byte[] cert) throws Exception {
-        setTitle("Login as "+login);
+        setTitle("Login as " + login);
+        userPanel = new JPanel();
+        controlPanel = new JPanel();
         pm = new ProtocolManager(cert);
         pm.startHandShake(login, password);
         ArrayList<ChatUser> online = pm.getOnlineUsers().getUsers();
         pm.receiveMessages();
-        setLayout(new GridLayout(10, 1));
+
+        setLayout(new BorderLayout());
+        controlPanel.setLayout(new FlowLayout());
+        userPanel.setLayout(new GridLayout(10, 1));
         for (final ChatUser user : online) {
             UserLabel ul = newUserLabel(user);
             userLabels.add(ul);
-            add(ul.getLabel());
+            userPanel.add(ul.getLabel());
         }
         setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new Dimension(300,300));
-        pack();
+        setPreferredSize(new Dimension(300, 300));
+        controlPanel.add(new JButton("reInitKey") {{
+            addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    pm.reInitAESKey();
+                }
+            });
+        }});
         pm.addProtocolEventListneer(new ProtocolEventsAdapter() {
             @Override
             public void onClientConnected(ChatUser c) {
@@ -58,6 +72,11 @@ public class UsersFrame extends JFrame {
                 processIncomingData(dt);
             }
         });
+        add(userPanel, BorderLayout.CENTER);
+        add(controlPanel, BorderLayout.SOUTH);
+
+
+        pack();
     }
 
     private void processIncomingData(DataTransfer dt) {
@@ -65,7 +84,7 @@ public class UsersFrame extends JFrame {
             if (dialog.getUser().getId() == dt.getFromId()) {
                 //уже есть открытый диалог.
                 dialog.requestFocus();
-                dialog.notifyNewMessage(dt.getContentType(), dt.getPayload());
+                dialog.printReceivedMessage(dt.getContentType(), dt.getPayload());
                 return;
             }
         }
@@ -73,7 +92,7 @@ public class UsersFrame extends JFrame {
         for (UserLabel label : userLabels) {
             if (label.getUser().getId() == dt.getFromId()) {
                 createNewDialog(label.getUser());
-                chatDialogs.get(chatDialogs.size() - 1).notifyNewMessage(dt.getContentType(), dt.getPayload());
+                chatDialogs.get(chatDialogs.size() - 1).printReceivedMessage(dt.getContentType(), dt.getPayload());
             }
         }
     }
@@ -91,7 +110,7 @@ public class UsersFrame extends JFrame {
 
     private void createNewDialog(ChatUser user) {
         //Небыло диалогов с этим пользователем
-        final ChatDialog newDialog = new ChatDialog(user, pm,this);
+        final ChatDialog newDialog = new ChatDialog(user, pm, this);
         chatDialogs.add(newDialog);
         newDialog.addWindowAdapter(new WindowAdapter() {
             @Override
@@ -104,7 +123,7 @@ public class UsersFrame extends JFrame {
     private void onUserConnected(ChatUser user) {
         UserLabel ul = newUserLabel(user);
         userLabels.add(ul);
-        add(ul.getLabel());
+        userPanel.add(ul.getLabel());
         pack();
     }
 
@@ -130,9 +149,10 @@ public class UsersFrame extends JFrame {
         }
     }
 
+
     public static void main(String[] args) throws Exception {
-        String login = "arg";
-        String password = "arg";
+        String login = args[0];
+        String password = args[1];
         byte[] cert = {1, 2, 3};
         new UsersFrame(login, password, cert).setVisible(true);
     }

@@ -1,6 +1,7 @@
 package protocol_misc;
 
 import crypto_misc.AESCipher;
+import crypto_misc.IEncoder;
 import crypto_misc.RSADecode;
 import crypto_misc.RSAEncode;
 import entities.ChatUser;
@@ -50,8 +51,8 @@ public class SSLv2Protocol {
         return encodePacketType(ProtocolConstants.PT_CHANGE_KEYSPEC, buffer.array());
     }
 
-    public static byte[] encodeAESkey(byte[] key, RSAEncode enc) throws IOException {
-        return enc.encode(encodePacketType(ProtocolConstants.PT_AES_KEY, key));
+    public static byte[] encodeAESkey(byte[] key, IEncoder enc) throws IOException {
+        return enc.enc(encodePacketType(ProtocolConstants.PT_AES_KEY, key));
     }
 
     public static byte[] encodeCertificate(byte[] certificate, AESCipher cipher) throws IOException {
@@ -78,61 +79,5 @@ public class SSLv2Protocol {
         bb.put(contentType);
         bb.put(content);
         return cipher.encrypt((encodePacketType(ProtocolConstants.PT_DATA_TRANSFER, bb.array())));
-    }
-
-
-    private static void sendViaSocket(Socket s, byte[] data) throws IOException {
-        OutputStream out = s.getOutputStream();
-        out.write(data);
-        out.flush();
-    }
-
-    public static void main(String[] args) throws Exception {
-        ProtocolManager pm = new ProtocolManager(new byte[]{1, 2, 3});
-        pm.startHandShake("mark", "mark");
-        System.out.println(pm.getOnlineUsers());
-
-        pm.addProtocolEventListneer(new ProtocolEventsAdapter() {
-            @Override
-            public void onClientConnected(ChatUser c) {
-                System.out.println("client connected " + c);
-            }
-
-            @Override
-            public void onClientDisconnected(int userId) {
-                System.out.println("client disconnected " + userId);
-            }
-
-            @Override
-            public void onDataReceived(DataTransfer dt) {
-                System.out.println("received = " + Arrays.toString(dt.getPayload()));
-            }
-        });
-
-        pm.receiveMessages();
-       pm.sendMessage(3,1,new byte[]{1,2,3});
-        while (true) {
-
-        }
-//        byte[] getUsers = encodeGetOnlineUsers(aesCipher);
-//        sendViaSocket(s, getUsers);
-//
-//        System.out.println("Get online answer");
-//        protocol_packages.SSLv2Packet packet5 = readAnswer(s);
-//        packet5.decrypt(aesCipher);
-//        System.out.println(protocol_misc.SSLv2PacketParser.decodeAsOnlineUsersResponse(packet5));
-//
-//        byte[] sendMessage = encodeDataTransfer((byte) 1, (byte) 2, "abc".getBytes(), aesCipher);
-//        sendViaSocket(s, sendMessage);
-//
-//        System.out.println("Get send msg answer");
-//        protocol_packages.SSLv2Packet packet6 = readAnswer(s);
-//        packet6.decrypt(aesCipher);
-//        System.out.println(packet6);
-//
-//        System.out.println("get message");
-//        protocol_packages.SSLv2Packet packet7 = readAnswer(s);
-//        packet7.decrypt(aesCipher);
-//        System.out.println(packet7);
     }
 }

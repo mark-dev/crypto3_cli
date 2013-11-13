@@ -20,7 +20,7 @@ import java.util.Arrays;
  * Time: 6:46 PM
  * To change this template use File | Settings | File Templates.
  */
-public class RSAEncode {
+public class RSAEncode implements IEncoder {
     private Cipher cipher;
 
     public RSAEncode(BigInteger modulus, BigInteger pubExp) throws Exception {
@@ -33,7 +33,10 @@ public class RSAEncode {
 
         this.cipher = cipher;
     }
-    public byte[] encode(byte[] plain){
+
+
+    @Override
+    public byte[] enc(byte[] plain) {
         try {
             return cipher.doFinal(plain);
         } catch (IllegalBlockSizeException e) {

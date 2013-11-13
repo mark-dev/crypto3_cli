@@ -10,7 +10,7 @@ import javax.crypto.spec.IvParameterSpec;
  * Time: 7:11 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AESCipher {
+public class AESCipher implements IEncoder {
     private static final String CRYPTO_ALG = "AES";
     private static final String CRYPTO_MODE = "CTR";
     private static final String PADDING = "NoPadding";
@@ -46,5 +46,10 @@ public class AESCipher {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public byte[] enc(byte[] plain) {
+        return encrypt(plain);
     }
 }

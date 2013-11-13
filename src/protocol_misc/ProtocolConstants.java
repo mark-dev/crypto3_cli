@@ -18,5 +18,9 @@ public interface ProtocolConstants {
     public static final byte PT_CLIENT_CONNECTED = 8;
     public static final byte PT_CLIENT_DISCONNECTED = 9;
     public static final byte PT_DATA_TRANSFER_TO_CLIENT = 13;
+    public static final byte PT_SERVER_WANNA_CHANGE_AES_KEY = 4;
+
+    public static final byte CONTENT_TYPE_TEXT = 2;
+    public static final byte CONTENT_TYPE_FILE = 1;
 }
 

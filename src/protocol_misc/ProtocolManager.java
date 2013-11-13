@@ -1,6 +1,7 @@
 package protocol_misc;
 
 import crypto_misc.AESCipher;
+import crypto_misc.IEncoder;
 import crypto_misc.RSADecode;
 import crypto_misc.RSAEncode;
 import entities.OnlineUsers;
@@ -54,7 +55,7 @@ public class ProtocolManager {
     public void startHandShake(String login, String password) throws Exception {
         startRSAKeyExchange();
         readServerRSAPubKey();
-        sendAESKey();
+        sendAESKey(rsaEncode);
         ensureServerRetunsOk(HandshakeAcitons.ENCRYPT_TEST);
         sendCertificate();
         ensureServerRetunsOk(HandshakeAcitons.CERTIFICATE);
@@ -80,6 +81,10 @@ public class ProtocolManager {
         sendViaSocket(transfer);
     }
 
+    public void reInitAESKey() {
+        sendAESKey(aesCipher);
+    }
+
     public void receiveMessages() {
         new Thread(new Runnable() {
             @Override
@@ -101,6 +106,10 @@ public class ProtocolManager {
                                 for (ProtocolEventsAdapter ad : listeners) {
                                     ad.onDataReceived(dt);
                                 }
+                                break;
+                            }
+                            case ProtocolConstants.PT_SERVER_WANNA_CHANGE_AES_KEY: {
+                                reInitAESKey();
                                 break;
                             }
                         }
@@ -175,13 +184,13 @@ public class ProtocolManager {
         }
     }
 
-    private void sendAESKey() {
+    private void sendAESKey(IEncoder enc) {
         try {
             KeyGenerator kg = KeyGenerator.getInstance("AES");
             SecretKey secretKey = kg.generateKey();
             aesCipher = new AESCipher(secretKey);
             byte[] aeskey = secretKey.getEncoded();
-            byte[] aesPacket = SSLv2Protocol.encodeAESkey(aeskey, rsaEncode);
+            byte[] aesPacket = SSLv2Protocol.encodeAESkey(aeskey, enc);
             sendViaSocket(aesPacket);
         } catch (Exception ex) {
             ex.printStackTrace();

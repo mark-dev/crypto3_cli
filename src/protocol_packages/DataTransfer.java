@@ -1,5 +1,7 @@
 package protocol_packages;
 
+import java.util.Arrays;
+
 /**
  * Created with IntelliJ IDEA.
  * User: markdev
@@ -16,6 +18,15 @@ public class DataTransfer {
         this.fromId = fromId;
         this.contentType = contentType;
         this.payload = payload;
+    }
+
+    @Override
+    public String toString() {
+        return "DataTransfer{" +
+                "fromId=" + fromId +
+                ", contentType=" + contentType +
+                ", payload=" + Arrays.toString(payload) +
+                '}';
     }
 
     public int getFromId() {
